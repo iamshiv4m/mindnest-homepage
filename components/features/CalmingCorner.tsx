@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Play,
@@ -10,9 +10,14 @@ import {
   Volume2,
   VolumeX,
   Flower2,
+  Palette,
+  Music,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAppStore } from "@/lib/store";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider"; // Assuming you have a Slider component from shadcn/ui
 
 interface CalmingActivity {
   id: string;
@@ -28,6 +33,7 @@ const BreathingExercise = () => {
   const [isActive, setIsActive] = useState(false);
   const [phase, setPhase] = useState<"inhale" | "hold" | "exhale">("inhale");
   const [count, setCount] = useState(4);
+  const { animationsEnabled } = useAppStore();
 
   useEffect(() => {
     if (!isActive) return;
@@ -85,7 +91,7 @@ const BreathingExercise = () => {
       <div className="relative w-64 h-64 mx-auto">
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-30"
-          animate={{ scale: getCircleScale() }}
+          animate={animationsEnabled ? { scale: getCircleScale() } : {}}
           transition={{
             duration: phase === "hold" ? 2 : phase === "inhale" ? 4 : 6,
             ease: "easeInOut",
@@ -93,7 +99,7 @@ const BreathingExercise = () => {
         />
         <motion.div
           className="absolute inset-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-50 flex items-center justify-center"
-          animate={{ scale: getCircleScale() }}
+          animate={animationsEnabled ? { scale: getCircleScale() } : {}}
           transition={{
             duration: phase === "hold" ? 2 : phase === "inhale" ? 4 : 6,
             ease: "easeInOut",
@@ -134,7 +140,7 @@ const BubblePopGame = () => {
     Array<{ id: number; x: number; y: number; size: number; color: string }>
   >([]);
   const [score, setScore] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { soundEnabled, animationsEnabled } = useAppStore();
 
   const colors = [
     "from-pink-400 to-rose-500",
@@ -210,7 +216,11 @@ const BubblePopGame = () => {
         <Button
           variant={soundEnabled ? "default" : "outline"}
           size="sm"
-          onClick={() => setSoundEnabled(!soundEnabled)}
+          onClick={() =>
+            useAppStore
+              .getState()
+              .updateSettings({ soundEnabled: !soundEnabled })
+          }
           className="p-2"
         >
           {soundEnabled ? (
@@ -226,11 +236,15 @@ const BubblePopGame = () => {
           {bubbles.map((bubble) => (
             <motion.button
               key={bubble.id}
-              initial={{ scale: 0, opacity: 0 }}
+              initial={
+                animationsEnabled ? { scale: 0, opacity: 0 } : { opacity: 1 }
+              }
               animate={{ scale: 1, opacity: 0.8 }}
-              exit={{ scale: 0, opacity: 0 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.8 }}
+              exit={
+                animationsEnabled ? { scale: 0, opacity: 0 } : { opacity: 1 }
+              }
+              whileHover={animationsEnabled ? { scale: 1.1 } : {}}
+              whileTap={animationsEnabled ? { scale: 0.8 } : {}}
               onClick={() => popBubble(bubble.id)}
               className={`absolute bg-gradient-to-br ${bubble.color} rounded-full shadow-lg cursor-pointer`}
               style={{
@@ -243,7 +257,7 @@ const BubblePopGame = () => {
             >
               <motion.div
                 className="w-full h-full rounded-full bg-white opacity-30"
-                animate={{ scale: [1, 1.2, 1] }}
+                animate={animationsEnabled ? { scale: [1, 1.2, 1] } : {}}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
               />
             </motion.button>
@@ -268,7 +282,8 @@ const BubblePopGame = () => {
 // Soft Sounds Component
 const SoftSounds = () => {
   const [currentSound, setCurrentSound] = useState<string | null>(null);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { soundEnabled, animationsEnabled } = useAppStore();
 
   const sounds = [
     {
@@ -304,28 +319,38 @@ const SoftSounds = () => {
   ];
 
   const playSound = (soundId: string) => {
-    if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
+    if (!soundEnabled) return; // Only play if sound is enabled in global settings
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
 
     if (currentSound === soundId) {
       setCurrentSound(null);
-      setAudio(null);
+      audioRef.current = null;
       return;
     }
 
-    // In a real app, you would load actual audio files
-    // For demo purposes, we'll just track the selected sound
+    // In a real app, you would load actual audio files like this:
+    // const newAudio = new Audio(`/sounds/${soundId}.mp3`);
+    // For now, we'll use a placeholder and rely on the soundEnabled flag
+    const newAudio = new Audio(); // Placeholder for actual audio
+    audioRef.current = newAudio;
     setCurrentSound(soundId);
-
-    // Simulate audio playback
-    const mockAudio = {
-      pause: () => {},
-      currentTime: 0,
-    } as HTMLAudioElement;
-    setAudio(mockAudio);
+    // newAudio.loop = true; // Loop the sound
+    // newAudio.play();
   };
+
+  useEffect(() => {
+    // Cleanup audio when component unmounts or sound is disabled
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, [soundEnabled]);
 
   return (
     <div className="space-y-6">
@@ -348,8 +373,8 @@ const SoftSounds = () => {
                 ? "ring-4 ring-white ring-opacity-50"
                 : ""
             }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={animationsEnabled ? { scale: 1.05 } : {}}
+            whileTap={animationsEnabled ? { scale: 0.95 } : {}}
           >
             <div className="text-4xl mb-3">{sound.emoji}</div>
             <div className="font-medium">{sound.name}</div>
@@ -382,6 +407,382 @@ const SoftSounds = () => {
   );
 };
 
+// Visual Timer Component
+const VisualTimer = () => {
+  const [duration, setDuration] = useState(5 * 60); // Default to 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const [isRunning, setIsRunning] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { soundEnabled, animationsEnabled, speak } = useAppStore();
+
+  const handleStartPause = () => {
+    if (isRunning) {
+      clearInterval(timerRef.current!);
+      speak("Timer paused.");
+    } else {
+      if (timeLeft === 0) {
+        setTimeLeft(duration); // Reset if timer finished
+      }
+      speak("Timer started.");
+    }
+    setIsRunning(!isRunning);
+  };
+
+  const handleReset = () => {
+    clearInterval(timerRef.current!);
+    setIsRunning(false);
+    setTimeLeft(duration);
+    speak("Timer reset.");
+  };
+
+  const handleSetDuration = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const minutes = Number.parseInt(e.target.value);
+    if (!isNaN(minutes) && minutes >= 0) {
+      const newDuration = minutes * 60;
+      setDuration(newDuration);
+      setTimeLeft(newDuration);
+    }
+  };
+
+  useEffect(() => {
+    if (isRunning && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && isRunning) {
+      clearInterval(timerRef.current!);
+      setIsRunning(false);
+      speak("Time's up! Great job!");
+      // Play a completion sound if desired
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isRunning, timeLeft, speak]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const progress = (timeLeft / duration) * 100;
+
+  return (
+    <div className="space-y-6 text-center">
+      <div className="text-2xl font-bold text-gray-800">
+        Set Timer Duration (minutes)
+      </div>
+      <Input
+        type="number"
+        value={Math.floor(duration / 60)}
+        onChange={handleSetDuration}
+        min="1"
+        className="w-32 mx-auto text-center text-lg py-3"
+        aria-label="Set timer duration in minutes"
+      />
+
+      <div className="relative w-64 h-64 mx-auto bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 origin-bottom"
+          style={{ height: `${progress}%` }}
+          initial={animationsEnabled ? { height: "100%" } : {}}
+          animate={animationsEnabled ? { height: `${progress}%` } : {}}
+          transition={{ duration: 1, ease: "linear" }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-white text-5xl font-bold drop-shadow-lg z-10">
+            {formatTime(timeLeft)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <Button
+          onClick={handleStartPause}
+          className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 text-lg"
+        >
+          {isRunning ? (
+            <Pause className="w-5 h-5 mr-2" />
+          ) : (
+            <Play className="w-5 h-5 mr-2" />
+          )}
+          {isRunning ? "Pause" : "Start"}
+        </Button>
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="px-8 py-3 text-lg bg-transparent"
+        >
+          <RotateCcw className="w-5 h-5 mr-2" />
+          Reset
+        </Button>
+      </div>
+
+      <p className="text-gray-600">
+        Use this timer to help with transitions, focus on tasks, or manage
+        waiting times.
+      </p>
+    </div>
+  );
+};
+
+// Sensory Play Component
+const SensoryPlay = () => {
+  const [activeTool, setActiveTool] = useState<
+    "color-mixer" | "sound-mixer" | null
+  >(null);
+  const { animationsEnabled, soundEnabled } = useAppStore();
+
+  // Color Mixer Sub-component
+  const ColorMixer = () => {
+    const [colors, setColors] = useState<string[]>([]);
+    const availableColors = [
+      "bg-red-500",
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-yellow-500",
+      "bg-purple-500",
+      "bg-orange-500",
+    ];
+
+    const addColor = (colorClass: string) => {
+      setColors((prev) => [...prev, colorClass]);
+    };
+
+    const clearColors = () => {
+      setColors([]);
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="relative w-full h-64 bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center">
+          <AnimatePresence>
+            {colors.map((colorClass, index) => (
+              <motion.div
+                key={index}
+                className={`absolute w-24 h-24 rounded-full opacity-70 ${colorClass}`}
+                initial={
+                  animationsEnabled ? { scale: 0, opacity: 0 } : { opacity: 1 }
+                }
+                animate={{
+                  scale: 1,
+                  opacity: 0.7,
+                  x: Math.random() * 200 - 100, // Random position
+                  y: Math.random() * 100 - 50,
+                  rotate: Math.random() * 360,
+                }}
+                exit={
+                  animationsEnabled ? { scale: 0, opacity: 0 } : { opacity: 1 }
+                }
+                transition={{ duration: animationsEnabled ? 0.5 : 0 }}
+              />
+            ))}
+          </AnimatePresence>
+          {colors.length === 0 && (
+            <div className="text-gray-500 text-lg">
+              Tap colors below to mix! 🎨
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap justify-center gap-3">
+          {availableColors.map((colorClass) => (
+            <motion.button
+              key={colorClass}
+              onClick={() => addColor(colorClass)}
+              className={`w-12 h-12 rounded-full ${colorClass} shadow-md hover:shadow-lg transition-all duration-200`}
+              whileHover={animationsEnabled ? { scale: 1.1 } : {}}
+              whileTap={animationsEnabled ? { scale: 0.9 } : {}}
+              aria-label={`Add ${colorClass
+                .replace("bg-", "")
+                .replace("-500", "")} color`}
+            />
+          ))}
+          <Button
+            onClick={clearColors}
+            variant="outline"
+            className="px-4 py-2 bg-transparent"
+          >
+            Clear
+          </Button>
+        </div>
+        <p className="text-center text-gray-600">
+          Tap colors to add them to the canvas and watch them blend!
+        </p>
+      </div>
+    );
+  };
+
+  // Sound Mixer Sub-component
+  const SoundMixer = () => {
+    const soundFiles = [
+      { id: "rain", name: "Rain", emoji: "🌧️", src: "/sounds/rain.mp3" },
+      { id: "chimes", name: "Chimes", emoji: "🔔", src: "/sounds/chimes.mp3" },
+      { id: "ocean", name: "Ocean", emoji: "🌊", src: "/sounds/ocean.mp3" },
+      { id: "forest", name: "Forest", emoji: "🌲", src: "/sounds/forest.mp3" },
+      { id: "hum", name: "Gentle Hum", emoji: "🎶", src: "/sounds/hum.mp3" },
+    ];
+
+    const audioNodes = useRef<{ [key: string]: HTMLAudioElement }>({});
+    const [volumes, setVolumes] = useState<{ [key: string]: number }>(
+      Object.fromEntries(soundFiles.map((s) => [s.id, 0.5]))
+    );
+    const [playingSounds, setPlayingSounds] = useState<string[]>([]);
+
+    useEffect(() => {
+      soundFiles.forEach((sound) => {
+        if (!audioNodes.current[sound.id]) {
+          const audio = new Audio(sound.src);
+          audio.loop = true;
+          audio.volume = volumes[sound.id] || 0.5;
+          audioNodes.current[sound.id] = audio;
+        }
+      });
+
+      return () => {
+        Object.values(audioNodes.current).forEach((audio) => {
+          audio.pause();
+          audio.currentTime = 0;
+        });
+      };
+    }, []); // Initialize audio elements once
+
+    useEffect(() => {
+      // Update volumes when state changes
+      Object.entries(volumes).forEach(([id, vol]) => {
+        if (audioNodes.current[id]) {
+          audioNodes.current[id].volume = vol * (soundEnabled ? 1 : 0); // Mute if global sound is off
+        }
+      });
+    }, [volumes, soundEnabled]);
+
+    const toggleSound = (id: string) => {
+      if (!soundEnabled) return; // Cannot play if global sound is off
+
+      const audio = audioNodes.current[id];
+      if (audio) {
+        if (playingSounds.includes(id)) {
+          audio.pause();
+          setPlayingSounds((prev) => prev.filter((s) => s !== id));
+        } else {
+          audio.play().catch((e) => console.error("Error playing audio:", e));
+          setPlayingSounds((prev) => [...prev, id]);
+        }
+      }
+    };
+
+    const handleVolumeChange = (id: string, newVolume: number[]) => {
+      setVolumes((prev) => ({ ...prev, [id]: newVolume[0] / 100 }));
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4">
+          {soundFiles.map((sound) => (
+            <Card key={sound.id} className="p-4">
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => toggleSound(sound.id)}
+                  variant={
+                    playingSounds.includes(sound.id) ? "default" : "outline"
+                  }
+                  className="p-3 rounded-full"
+                  disabled={!soundEnabled}
+                >
+                  {playingSounds.includes(sound.id) ? (
+                    <Pause className="w-5 h-5" />
+                  ) : (
+                    <Play className="w-5 h-5" />
+                  )}
+                </Button>
+                <div className="text-3xl">{sound.emoji}</div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800">{sound.name}</h3>
+                  <Slider
+                    value={[volumes[sound.id] * 100]}
+                    onValueChange={(val) => handleVolumeChange(sound.id, val)}
+                    max={100}
+                    step={1}
+                    className="w-full mt-2"
+                    aria-label={`Volume for ${sound.name}`}
+                  />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+        {!soundEnabled && (
+          <p className="text-center text-red-500 text-sm">
+            Sound is currently disabled in settings. Please enable it to use the
+            sound mixer.
+          </p>
+        )}
+        <p className="text-center text-gray-600">
+          Mix different sounds to create your perfect calming soundscape.
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-center gap-4">
+        <Button
+          onClick={() => setActiveTool("color-mixer")}
+          variant={activeTool === "color-mixer" ? "default" : "outline"}
+          className="flex-1 py-3 text-lg"
+        >
+          <Palette className="w-5 h-5 mr-2" />
+          Color Mixer
+        </Button>
+        <Button
+          onClick={() => setActiveTool("sound-mixer")}
+          variant={activeTool === "sound-mixer" ? "default" : "outline"}
+          className="flex-1 py-3 text-lg"
+        >
+          <Music className="w-5 h-5 mr-2" />
+          Sound Mixer
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTool}
+              initial={
+                animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }
+              }
+              animate={{ opacity: 1, y: 0 }}
+              exit={animationsEnabled ? { opacity: 0, y: -20 } : { opacity: 1 }}
+              transition={{ duration: animationsEnabled ? 0.3 : 0 }}
+            >
+              {activeTool === "color-mixer" && <ColorMixer />}
+              {activeTool === "sound-mixer" && <SoundMixer />}
+              {!activeTool && (
+                <div className="text-center space-y-4 p-8">
+                  <div className="text-6xl">✨</div>
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Choose a Sensory Tool
+                  </h3>
+                  <p className="text-gray-600">
+                    Explore visual or auditory experiences to help you regulate.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const activities: CalmingActivity[] = [
   {
     id: "breathing",
@@ -407,11 +808,28 @@ const activities: CalmingActivity[] = [
     color: "from-green-400 to-teal-600",
     component: SoftSounds,
   },
+  {
+    id: "timer",
+    title: "Visual Timer",
+    description: "See time pass visually for tasks and transitions",
+    emoji: "⏳",
+    color: "from-orange-400 to-yellow-600",
+    component: VisualTimer,
+  },
+  {
+    id: "sensory-play",
+    title: "Sensory Play",
+    description: "Explore interactive visual and auditory tools",
+    emoji: "🌈",
+    color: "from-purple-400 to-pink-600",
+    component: SensoryPlay,
+  },
 ];
 
 export function CalmingCorner() {
   const [selectedActivity, setSelectedActivity] =
     useState<CalmingActivity | null>(null);
+  const { animationsEnabled } = useAppStore();
 
   if (!selectedActivity) {
     return (
@@ -420,7 +838,7 @@ export function CalmingCorner() {
         <div className="flex items-center gap-3">
           <motion.div
             className="bg-gradient-to-r from-rose-500 to-pink-600 rounded-full p-3"
-            whileHover={{ scale: 1.05 }}
+            whileHover={animationsEnabled ? { scale: 1.05 } : {}}
           >
             <Flower2 className="w-6 h-6 text-white" />
           </motion.div>
@@ -437,7 +855,9 @@ export function CalmingCorner() {
           {activities.map((activity, index) => (
             <motion.div
               key={activity.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={
+                animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }
+              }
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >

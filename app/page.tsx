@@ -10,6 +10,9 @@ import {
   Flower2,
   Settings,
   Sparkles,
+  Users,
+  ClipboardList,
+  ClipboardCheck,
 } from "lucide-react";
 import { VisualRoutineBuilder } from "@/components/features/VisualRoutineBuilder";
 import { EmotionCards } from "@/components/features/EmotionCards";
@@ -18,6 +21,9 @@ import { SocialStoryViewer } from "@/components/features/SocialStoryViewer";
 import { CalmingCorner } from "@/components/features/CalmingCorner";
 import { useAppStore } from "@/lib/store";
 import { AppSettings } from "@/components/features/AppSettings";
+import { SocialSkillsGame } from "@/components/features/SocialSkillsGame";
+import { VisualScheduleBuilder } from "@/components/features/VisualScheduleBuilder";
+import { IEPTracker } from "@/components/features/IEPTracker";
 
 const navigationItems = [
   {
@@ -50,6 +56,24 @@ const navigationItems = [
     icon: Flower2,
     color: "from-rose-400 to-rose-600",
   },
+  {
+    id: "social-skills",
+    label: "Social Skills",
+    icon: Users,
+    color: "from-orange-400 to-yellow-600",
+  },
+  {
+    id: "visual-schedule",
+    label: "My Schedule",
+    icon: ClipboardList,
+    color: "from-teal-400 to-cyan-600",
+  },
+  {
+    id: "iep-tracker",
+    label: "IEP Tracker",
+    icon: ClipboardCheck,
+    color: "from-indigo-400 to-purple-600",
+  }, // New navigation item
 ];
 
 export default function MindNestApp() {
@@ -73,6 +97,12 @@ export default function MindNestApp() {
         return <SocialStoryViewer />;
       case "calm":
         return <CalmingCorner />;
+      case "social-skills":
+        return <SocialSkillsGame />;
+      case "visual-schedule":
+        return <VisualScheduleBuilder />;
+      case "iep-tracker": // New case for IEP tracker
+        return <IEPTracker />;
       default:
         return <VisualRoutineBuilder />;
     }
