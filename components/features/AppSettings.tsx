@@ -1,12 +1,21 @@
-"use client"
-import { motion } from "framer-motion"
-import { Settings, Palette, Volume2, VolumeX, Zap, ZapOff, Type, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppStore } from "@/lib/store"
+"use client";
+import { motion } from "framer-motion";
+import {
+  Settings,
+  Palette,
+  Volume2,
+  VolumeX,
+  Zap,
+  ZapOff,
+  Type,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAppStore } from "@/lib/store";
 
 interface AppSettingsProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 export function AppSettings({ onClose }: AppSettingsProps) {
@@ -17,19 +26,39 @@ export function AppSettings({ onClose }: AppSettingsProps) {
     textSize,
     updateSettings,
     animationsEnabled: animEnabled,
-  } = useAppStore()
+  } = useAppStore();
 
   const themeOptions = [
-    { id: "light", name: "Light", description: "Bright and colorful", emoji: "☀️" },
+    {
+      id: "light",
+      name: "Light",
+      description: "Bright and colorful",
+      emoji: "☀️",
+    },
     { id: "dark", name: "Dark", description: "Easy on the eyes", emoji: "🌙" },
-    { id: "high-contrast", name: "High Contrast", description: "Better visibility", emoji: "⚡" },
-  ]
+    {
+      id: "high-contrast",
+      name: "High Contrast",
+      description: "Better visibility",
+      emoji: "⚡",
+    },
+  ];
 
   const textSizeOptions = [
-    { id: "small", name: "Small", description: "Compact text", size: "text-sm" },
-    { id: "medium", name: "Medium", description: "Standard text", size: "text-base" },
+    {
+      id: "small",
+      name: "Small",
+      description: "Compact text",
+      size: "text-sm",
+    },
+    {
+      id: "medium",
+      name: "Medium",
+      description: "Standard text",
+      size: "text-base",
+    },
     { id: "large", name: "Large", description: "Bigger text", size: "text-lg" },
-  ]
+  ];
 
   return (
     <div className="space-y-6">
@@ -44,7 +73,11 @@ export function AppSettings({ onClose }: AppSettingsProps) {
           </motion.div>
           <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
         </div>
-        <Button variant="outline" onClick={onClose} className="p-2 bg-transparent">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="p-2 bg-transparent"
+        >
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -75,7 +108,9 @@ export function AppSettings({ onClose }: AppSettingsProps) {
                   <span className="text-2xl">{option.emoji}</span>
                   <div>
                     <div className="font-medium">{option.name}</div>
-                    <div className="text-sm text-gray-600">{option.description}</div>
+                    <div className="text-sm text-gray-600">
+                      {option.description}
+                    </div>
                   </div>
                 </div>
               </motion.button>
@@ -87,7 +122,11 @@ export function AppSettings({ onClose }: AppSettingsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              {soundEnabled ? (
+                <Volume2 className="w-5 h-5" />
+              ) : (
+                <VolumeX className="w-5 h-5" />
+              )}
               Sound
             </CardTitle>
           </CardHeader>
@@ -104,9 +143,13 @@ export function AppSettings({ onClose }: AppSettingsProps) {
             >
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <div className="font-medium">{soundEnabled ? "Sound On" : "Sound Off"}</div>
+                  <div className="font-medium">
+                    {soundEnabled ? "Sound On" : "Sound Off"}
+                  </div>
                   <div className="text-sm opacity-75">
-                    {soundEnabled ? "Voice and sound effects enabled" : "All sounds muted"}
+                    {soundEnabled
+                      ? "Voice and sound effects enabled"
+                      : "All sounds muted"}
                   </div>
                 </div>
                 <div className="text-2xl">{soundEnabled ? "🔊" : "🔇"}</div>
@@ -119,13 +162,19 @@ export function AppSettings({ onClose }: AppSettingsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {animationsEnabled ? <Zap className="w-5 h-5" /> : <ZapOff className="w-5 h-5" />}
+              {animationsEnabled ? (
+                <Zap className="w-5 h-5" />
+              ) : (
+                <ZapOff className="w-5 h-5" />
+              )}
               Animations
             </CardTitle>
           </CardHeader>
           <CardContent>
             <motion.button
-              onClick={() => updateSettings({ animationsEnabled: !animationsEnabled })}
+              onClick={() =>
+                updateSettings({ animationsEnabled: !animationsEnabled })
+              }
               className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
                 animationsEnabled
                   ? "border-purple-500 bg-purple-50 text-purple-700"
@@ -136,12 +185,18 @@ export function AppSettings({ onClose }: AppSettingsProps) {
             >
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <div className="font-medium">{animationsEnabled ? "Animations On" : "Animations Off"}</div>
+                  <div className="font-medium">
+                    {animationsEnabled ? "Animations On" : "Animations Off"}
+                  </div>
                   <div className="text-sm opacity-75">
-                    {animationsEnabled ? "Smooth transitions and effects" : "Reduced motion for focus"}
+                    {animationsEnabled
+                      ? "Smooth transitions and effects"
+                      : "Reduced motion for focus"}
                   </div>
                 </div>
-                <div className="text-2xl">{animationsEnabled ? "✨" : "⏸️"}</div>
+                <div className="text-2xl">
+                  {animationsEnabled ? "✨" : "⏸️"}
+                </div>
               </div>
             </motion.button>
           </CardContent>
@@ -171,7 +226,9 @@ export function AppSettings({ onClose }: AppSettingsProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{option.name}</div>
-                    <div className="text-sm text-gray-600">{option.description}</div>
+                    <div className="text-sm text-gray-600">
+                      {option.description}
+                    </div>
                   </div>
                   <div className={`${option.size} font-medium`}>Aa</div>
                 </div>
@@ -187,7 +244,9 @@ export function AppSettings({ onClose }: AppSettingsProps) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-medium text-gray-800">Reset All Settings</h3>
-              <p className="text-sm text-gray-600">Return to default settings</p>
+              <p className="text-sm text-gray-600">
+                Return to default settings
+              </p>
             </div>
             <Button
               variant="outline"
@@ -197,7 +256,7 @@ export function AppSettings({ onClose }: AppSettingsProps) {
                   soundEnabled: true,
                   animationsEnabled: true,
                   textSize: "medium",
-                })
+                });
               }}
               className="text-red-600 border-red-200 hover:bg-red-50"
             >
@@ -207,5 +266,5 @@ export function AppSettings({ onClose }: AppSettingsProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

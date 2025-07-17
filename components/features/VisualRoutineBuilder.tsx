@@ -1,28 +1,78 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Plus, Play, Check, Trash2, Calendar, Clock, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { useAppStore } from "@/lib/store"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Plus, Play, Check, Trash2, Calendar, Clock, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useAppStore } from "@/lib/store";
 
 const routineStepOptions = [
-  { id: "wake-up", title: "Wake Up", emoji: "🌅", description: "Start the day" },
-  { id: "brush-teeth", title: "Brush Teeth", emoji: "🦷", description: "Clean teeth" },
-  { id: "wash-face", title: "Wash Face", emoji: "🧼", description: "Clean face" },
-  { id: "get-dressed", title: "Get Dressed", emoji: "👕", description: "Put on clothes" },
-  { id: "eat-breakfast", title: "Eat Breakfast", emoji: "🥞", description: "Morning meal" },
-  { id: "pack-bag", title: "Pack Bag", emoji: "🎒", description: "Get ready to go" },
-  { id: "go-to-school", title: "Go to School", emoji: "🏫", description: "Travel to school" },
+  {
+    id: "wake-up",
+    title: "Wake Up",
+    emoji: "🌅",
+    description: "Start the day",
+  },
+  {
+    id: "brush-teeth",
+    title: "Brush Teeth",
+    emoji: "🦷",
+    description: "Clean teeth",
+  },
+  {
+    id: "wash-face",
+    title: "Wash Face",
+    emoji: "🧼",
+    description: "Clean face",
+  },
+  {
+    id: "get-dressed",
+    title: "Get Dressed",
+    emoji: "👕",
+    description: "Put on clothes",
+  },
+  {
+    id: "eat-breakfast",
+    title: "Eat Breakfast",
+    emoji: "🥞",
+    description: "Morning meal",
+  },
+  {
+    id: "pack-bag",
+    title: "Pack Bag",
+    emoji: "🎒",
+    description: "Get ready to go",
+  },
+  {
+    id: "go-to-school",
+    title: "Go to School",
+    emoji: "🏫",
+    description: "Travel to school",
+  },
   { id: "lunch", title: "Lunch Time", emoji: "🍎", description: "Midday meal" },
-  { id: "homework", title: "Do Homework", emoji: "📚", description: "Study time" },
-  { id: "play", title: "Play Time", emoji: "🎮", description: "Fun activities" },
-  { id: "dinner", title: "Eat Dinner", emoji: "🍽️", description: "Evening meal" },
+  {
+    id: "homework",
+    title: "Do Homework",
+    emoji: "📚",
+    description: "Study time",
+  },
+  {
+    id: "play",
+    title: "Play Time",
+    emoji: "🎮",
+    description: "Fun activities",
+  },
+  {
+    id: "dinner",
+    title: "Eat Dinner",
+    emoji: "🍽️",
+    description: "Evening meal",
+  },
   { id: "bath", title: "Take Bath", emoji: "🛁", description: "Get clean" },
   { id: "bedtime", title: "Go to Bed", emoji: "🛏️", description: "Sleep time" },
-]
+];
 
 export function VisualRoutineBuilder() {
   const {
@@ -35,13 +85,15 @@ export function VisualRoutineBuilder() {
     updateRoutineStep,
     speak,
     animationsEnabled,
-  } = useAppStore()
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newRoutineTitle, setNewRoutineTitle] = useState("")
-  const [selectedSteps, setSelectedSteps] = useState<typeof routineStepOptions>([])
+  } = useAppStore();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newRoutineTitle, setNewRoutineTitle] = useState("");
+  const [selectedSteps, setSelectedSteps] = useState<typeof routineStepOptions>(
+    []
+  );
 
   const handleCreateRoutine = () => {
-    if (!newRoutineTitle.trim() || selectedSteps.length === 0) return
+    if (!newRoutineTitle.trim() || selectedSteps.length === 0) return;
 
     const routine = {
       title: newRoutineTitle,
@@ -53,33 +105,43 @@ export function VisualRoutineBuilder() {
         completed: false,
         order: index,
       })),
-    }
+    };
 
-    addRoutine(routine)
-    setNewRoutineTitle("")
-    setSelectedSteps([])
-    setShowCreateForm(false)
-    speak(`Created new routine: ${newRoutineTitle}`)
-  }
+    addRoutine(routine);
+    setNewRoutineTitle("");
+    setSelectedSteps([]);
+    setShowCreateForm(false);
+    speak(`Created new routine: ${newRoutineTitle}`);
+  };
 
-  const handleStepToggle = (routineId: string, stepId: string, completed: boolean) => {
-    updateRoutineStep(routineId, stepId, completed)
-    const step = routines.find((r) => r.id === routineId)?.steps.find((s) => s.id === stepId)
+  const handleStepToggle = (
+    routineId: string,
+    stepId: string,
+    completed: boolean
+  ) => {
+    updateRoutineStep(routineId, stepId, completed);
+    const step = routines
+      .find((r) => r.id === routineId)
+      ?.steps.find((s) => s.id === stepId);
     if (step) {
-      speak(completed ? `Completed: ${step.title}` : `Unchecked: ${step.title}`)
+      speak(
+        completed ? `Completed: ${step.title}` : `Unchecked: ${step.title}`
+      );
     }
-  }
+  };
 
   const handleStartRoutine = (routine: any) => {
-    setCurrentRoutine(routine)
-    speak(`Starting routine: ${routine.title}`)
-  }
+    setCurrentRoutine(routine);
+    speak(`Starting routine: ${routine.title}`);
+  };
 
   if (showCreateForm) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Create New Routine</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Create New Routine
+          </h2>
           <Button variant="outline" onClick={() => setShowCreateForm(false)}>
             Cancel
           </Button>
@@ -91,7 +153,9 @@ export function VisualRoutineBuilder() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Routine Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Routine Name
+              </label>
               <Input
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
@@ -101,18 +165,24 @@ export function VisualRoutineBuilder() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4">Choose Steps (tap to add/remove)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Choose Steps (tap to add/remove)
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {routineStepOptions.map((step) => {
-                  const isSelected = selectedSteps.some((s) => s.id === step.id)
+                  const isSelected = selectedSteps.some(
+                    (s) => s.id === step.id
+                  );
                   return (
                     <motion.button
                       key={step.id}
                       onClick={() => {
                         if (isSelected) {
-                          setSelectedSteps(selectedSteps.filter((s) => s.id !== step.id))
+                          setSelectedSteps(
+                            selectedSteps.filter((s) => s.id !== step.id)
+                          );
                         } else {
-                          setSelectedSteps([...selectedSteps, step])
+                          setSelectedSteps([...selectedSteps, step]);
                         }
                       }}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 ${
@@ -126,7 +196,7 @@ export function VisualRoutineBuilder() {
                       <div className="text-3xl mb-2">{step.emoji}</div>
                       <div className="font-medium text-sm">{step.title}</div>
                     </motion.button>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -162,19 +232,23 @@ export function VisualRoutineBuilder() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (currentRoutine) {
-    const completedSteps = currentRoutine.steps.filter((step) => step.completed).length
-    const totalSteps = currentRoutine.steps.length
-    const progress = (completedSteps / totalSteps) * 100
+    const completedSteps = currentRoutine.steps.filter(
+      (step) => step.completed
+    ).length;
+    const totalSteps = currentRoutine.steps.length;
+    const progress = (completedSteps / totalSteps) * 100;
 
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">{currentRoutine.title}</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {currentRoutine.title}
+            </h2>
             <p className="text-gray-600">
               {completedSteps} of {totalSteps} steps completed
             </p>
@@ -192,7 +266,11 @@ export function VisualRoutineBuilder() {
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5 }}
           >
-            {progress > 20 && <span className="text-white text-xs font-bold">{Math.round(progress)}%</span>}
+            {progress > 20 && (
+              <span className="text-white text-xs font-bold">
+                {Math.round(progress)}%
+              </span>
+            )}
           </motion.div>
         </div>
 
@@ -201,17 +279,29 @@ export function VisualRoutineBuilder() {
           {currentRoutine.steps.map((step, index) => (
             <motion.div
               key={step.id}
-              initial={animationsEnabled ? { opacity: 0, x: -20 } : { opacity: 1 }}
+              initial={
+                animationsEnabled ? { opacity: 0, x: -20 } : { opacity: 1 }
+              }
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
             >
               <Card
-                className={`transition-all duration-300 ${step.completed ? "bg-green-50 border-green-200" : "hover:shadow-md"}`}
+                className={`transition-all duration-300 ${
+                  step.completed
+                    ? "bg-green-50 border-green-200"
+                    : "hover:shadow-md"
+                }`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => handleStepToggle(currentRoutine.id, step.id, !step.completed)}
+                      onClick={() =>
+                        handleStepToggle(
+                          currentRoutine.id,
+                          step.id,
+                          !step.completed
+                        )
+                      }
                       className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                         step.completed
                           ? "bg-green-500 border-green-500 text-white"
@@ -229,17 +319,31 @@ export function VisualRoutineBuilder() {
 
                     <div className="flex-1">
                       <h3
-                        className={`text-xl font-semibold ${step.completed ? "text-green-700 line-through" : "text-gray-800"}`}
+                        className={`text-xl font-semibold ${
+                          step.completed
+                            ? "text-green-700 line-through"
+                            : "text-gray-800"
+                        }`}
                       >
                         {step.title}
                       </h3>
                       {step.description && (
-                        <p className={`text-gray-600 ${step.completed ? "line-through" : ""}`}>{step.description}</p>
+                        <p
+                          className={`text-gray-600 ${
+                            step.completed ? "line-through" : ""
+                          }`}
+                        >
+                          {step.description}
+                        </p>
                       )}
                     </div>
 
                     {step.completed && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-green-500">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="text-green-500"
+                      >
                         <Star className="w-6 h-6 fill-current" />
                       </motion.div>
                     )}
@@ -259,13 +363,16 @@ export function VisualRoutineBuilder() {
             <div className="text-6xl">🎉</div>
             <h3 className="text-2xl font-bold">Congratulations!</h3>
             <p className="text-lg">You completed your routine!</p>
-            <Button onClick={() => setCurrentRoutine(null)} className="bg-white text-green-600 hover:bg-gray-100">
+            <Button
+              onClick={() => setCurrentRoutine(null)}
+              className="bg-white text-green-600 hover:bg-gray-100"
+            >
               Back to Routines
             </Button>
           </motion.div>
         )}
       </div>
-    )
+    );
   }
 
   return (
@@ -295,9 +402,12 @@ export function VisualRoutineBuilder() {
           <CardContent className="p-12 text-center space-y-6">
             <div className="text-6xl">📅</div>
             <div className="space-y-3">
-              <h3 className="text-2xl font-semibold text-gray-800">Ready to create your first routine?</h3>
+              <h3 className="text-2xl font-semibold text-gray-800">
+                Ready to create your first routine?
+              </h3>
               <p className="text-gray-600 text-lg">
-                Build step-by-step visual guides that help you navigate your day with confidence
+                Build step-by-step visual guides that help you navigate your day
+                with confidence
               </p>
             </div>
             <Button
@@ -312,14 +422,19 @@ export function VisualRoutineBuilder() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {routines.map((routine, index) => {
-            const completedSteps = routine.steps.filter((step) => step.completed).length
-            const totalSteps = routine.steps.length
-            const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
+            const completedSteps = routine.steps.filter(
+              (step) => step.completed
+            ).length;
+            const totalSteps = routine.steps.length;
+            const progress =
+              totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
 
             return (
               <motion.div
                 key={routine.id}
-                initial={animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }}
+                initial={
+                  animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }
+                }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
@@ -332,8 +447,8 @@ export function VisualRoutineBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            deleteRoutine(routine.id)
+                            e.stopPropagation();
+                            deleteRoutine(routine.id);
                           }}
                           className="text-red-500 hover:text-red-700"
                         >
@@ -359,12 +474,18 @@ export function VisualRoutineBuilder() {
 
                     <div className="flex flex-wrap gap-2">
                       {routine.steps.slice(0, 6).map((step) => (
-                        <span key={step.id} className="text-2xl" title={step.title}>
+                        <span
+                          key={step.id}
+                          className="text-2xl"
+                          title={step.title}
+                        >
                           {step.emoji}
                         </span>
                       ))}
                       {routine.steps.length > 6 && (
-                        <span className="text-gray-400 text-sm">+{routine.steps.length - 6} more</span>
+                        <span className="text-gray-400 text-sm">
+                          +{routine.steps.length - 6} more
+                        </span>
                       )}
                     </div>
 
@@ -378,10 +499,10 @@ export function VisualRoutineBuilder() {
                   </CardContent>
                 </Card>
               </motion.div>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }

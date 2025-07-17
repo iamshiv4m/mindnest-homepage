@@ -1,67 +1,71 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface Routine {
-  id: string
-  title: string
-  steps: RoutineStep[]
-  createdAt: Date
-  completedAt?: Date
+  id: string;
+  title: string;
+  steps: RoutineStep[];
+  createdAt: Date;
+  completedAt?: Date;
 }
 
 export interface RoutineStep {
-  id: string
-  title: string
-  description?: string
-  emoji: string
-  completed: boolean
-  order: number
+  id: string;
+  title: string;
+  description?: string;
+  emoji: string;
+  completed: boolean;
+  order: number;
 }
 
 export interface EmotionEntry {
-  id: string
-  emotion: string
-  emoji: string
-  timestamp: Date
-  note?: string
+  id: string;
+  emotion: string;
+  emoji: string;
+  timestamp: Date;
+  note?: string;
 }
 
 export interface AppSettings {
-  theme: "light" | "dark" | "high-contrast"
-  soundEnabled: boolean
-  animationsEnabled: boolean
-  textSize: "small" | "medium" | "large"
-  autoSpeak: boolean
+  theme: "light" | "dark" | "high-contrast";
+  soundEnabled: boolean;
+  animationsEnabled: boolean;
+  textSize: "small" | "medium" | "large";
+  autoSpeak: boolean;
 }
 
 interface AppState {
   // Settings
-  theme: AppSettings["theme"]
-  soundEnabled: boolean
-  animationsEnabled: boolean
-  textSize: AppSettings["textSize"]
-  autoSpeak: boolean
+  theme: AppSettings["theme"];
+  soundEnabled: boolean;
+  animationsEnabled: boolean;
+  textSize: AppSettings["textSize"];
+  autoSpeak: boolean;
 
   // Routines
-  routines: Routine[]
-  currentRoutine: Routine | null
+  routines: Routine[];
+  currentRoutine: Routine | null;
 
   // Emotions
-  emotionHistory: EmotionEntry[]
+  emotionHistory: EmotionEntry[];
 
   // Recently used AAC symbols
-  recentSymbols: string[]
+  recentSymbols: string[];
 
   // Actions
-  updateSettings: (settings: Partial<AppSettings>) => void
-  addRoutine: (routine: Omit<Routine, "id" | "createdAt">) => void
-  updateRoutine: (id: string, updates: Partial<Routine>) => void
-  deleteRoutine: (id: string) => void
-  setCurrentRoutine: (routine: Routine | null) => void
-  updateRoutineStep: (routineId: string, stepId: string, completed: boolean) => void
-  addEmotionEntry: (entry: Omit<EmotionEntry, "id" | "timestamp">) => void
-  addRecentSymbol: (symbolId: string) => void
-  speak: (text: string) => void
+  updateSettings: (settings: Partial<AppSettings>) => void;
+  addRoutine: (routine: Omit<Routine, "id" | "createdAt">) => void;
+  updateRoutine: (id: string, updates: Partial<Routine>) => void;
+  deleteRoutine: (id: string) => void;
+  setCurrentRoutine: (routine: Routine | null) => void;
+  updateRoutineStep: (
+    routineId: string,
+    stepId: string,
+    completed: boolean
+  ) => void;
+  addEmotionEntry: (entry: Omit<EmotionEntry, "id" | "timestamp">) => void;
+  addRecentSymbol: (symbolId: string) => void;
+  speak: (text: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -88,19 +92,22 @@ export const useAppStore = create<AppState>()(
           ...routineData,
           id: Date.now().toString(),
           createdAt: new Date(),
-        }
-        set((state) => ({ routines: [...state.routines, routine] }))
+        };
+        set((state) => ({ routines: [...state.routines, routine] }));
       },
 
       updateRoutine: (id, updates) =>
         set((state) => ({
-          routines: state.routines.map((routine) => (routine.id === id ? { ...routine, ...updates } : routine)),
+          routines: state.routines.map((routine) =>
+            routine.id === id ? { ...routine, ...updates } : routine
+          ),
         })),
 
       deleteRoutine: (id) =>
         set((state) => ({
           routines: state.routines.filter((routine) => routine.id !== id),
-          currentRoutine: state.currentRoutine?.id === id ? null : state.currentRoutine,
+          currentRoutine:
+            state.currentRoutine?.id === id ? null : state.currentRoutine,
         })),
 
       setCurrentRoutine: (routine) => set({ currentRoutine: routine }),
@@ -111,9 +118,11 @@ export const useAppStore = create<AppState>()(
             routine.id === routineId
               ? {
                   ...routine,
-                  steps: routine.steps.map((step) => (step.id === stepId ? { ...step, completed } : step)),
+                  steps: routine.steps.map((step) =>
+                    step.id === stepId ? { ...step, completed } : step
+                  ),
                 }
-              : routine,
+              : routine
           ),
         })),
 
@@ -122,25 +131,28 @@ export const useAppStore = create<AppState>()(
           ...entryData,
           id: Date.now().toString(),
           timestamp: new Date(),
-        }
-        set((state) => ({ emotionHistory: [entry, ...state.emotionHistory] }))
+        };
+        set((state) => ({ emotionHistory: [entry, ...state.emotionHistory] }));
       },
 
       addRecentSymbol: (symbolId) =>
         set((state) => ({
-          recentSymbols: [symbolId, ...state.recentSymbols.filter((id) => id !== symbolId)].slice(0, 6),
+          recentSymbols: [
+            symbolId,
+            ...state.recentSymbols.filter((id) => id !== symbolId),
+          ].slice(0, 6),
         })),
 
       speak: (text) => {
-        const { soundEnabled } = get()
-        if (!soundEnabled || !("speechSynthesis" in window)) return
+        const { soundEnabled } = get();
+        if (!soundEnabled || !("speechSynthesis" in window)) return;
 
-        speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.rate = 0.8
-        utterance.pitch = 1.1
-        utterance.volume = 0.8
-        speechSynthesis.speak(utterance)
+        speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.8;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+        speechSynthesis.speak(utterance);
       },
     }),
     {
@@ -155,6 +167,6 @@ export const useAppStore = create<AppState>()(
         emotionHistory: state.emotionHistory,
         recentSymbols: state.recentSymbols,
       }),
-    },
-  ),
-)
+    }
+  )
+);
