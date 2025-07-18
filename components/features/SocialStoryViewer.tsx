@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppStore } from "@/lib/store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StoryPage {
   id: number;
@@ -210,15 +211,16 @@ const socialStories: SocialStory[] = [
 ];
 
 export function SocialStoryViewer() {
-  const { speak, animationsEnabled } = useAppStore();
   const [selectedStory, setSelectedStory] = useState<SocialStory | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const { speak, animationsEnabled } = useAppStore();
+  const isMobile = useIsMobile();
 
   const handleStorySelect = (story: SocialStory) => {
     setSelectedStory(story);
     setCurrentPage(0);
-    setIsAutoPlay(false);
+    setIsAutoPlaying(false);
     speak(`Starting story: ${story.title}`);
   };
 
@@ -226,7 +228,7 @@ export function SocialStoryViewer() {
     if (selectedStory && currentPage < selectedStory.pages.length - 1) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
-      if (isAutoPlay) {
+      if (isAutoPlaying) {
         const page = selectedStory.pages[nextPage];
         speak(page.audioText || page.text);
       }
@@ -236,7 +238,7 @@ export function SocialStoryViewer() {
     ) {
       // Story finished
       speak("Story complete! Great job reading along!");
-      setIsAutoPlay(false);
+      setIsAutoPlaying(false);
     }
   };
 
@@ -244,7 +246,7 @@ export function SocialStoryViewer() {
     if (currentPage > 0) {
       const prevPage = currentPage - 1;
       setCurrentPage(prevPage);
-      if (isAutoPlay && selectedStory) {
+      if (isAutoPlaying && selectedStory) {
         const page = selectedStory.pages[prevPage];
         speak(page.audioText || page.text);
       }
@@ -261,8 +263,8 @@ export function SocialStoryViewer() {
   const handleAutoPlay = () => {
     if (!selectedStory) return;
 
-    setIsAutoPlay(!isAutoPlay);
-    if (!isAutoPlay) {
+    setIsAutoPlaying(!isAutoPlaying);
+    if (!isAutoPlaying) {
       // Starting auto-play
       const page = selectedStory.pages[currentPage];
       speak(page.audioText || page.text);
@@ -279,7 +281,7 @@ export function SocialStoryViewer() {
   const resetStory = () => {
     setSelectedStory(null);
     setCurrentPage(0);
-    setIsAutoPlay(false);
+    setIsAutoPlaying(false);
     if ("speechSynthesis" in window) {
       speechSynthesis.cancel();
     }
@@ -292,7 +294,7 @@ export function SocialStoryViewer() {
 
   // Auto-advance pages when auto-play is enabled
   useState(() => {
-    if (!isAutoPlay || !selectedStory) return;
+    if (!isAutoPlaying || !selectedStory) return;
 
     const currentPageData = selectedStory.pages[currentPage];
     const textLength = (currentPageData.audioText || currentPageData.text)
@@ -303,7 +305,7 @@ export function SocialStoryViewer() {
       if (currentPage < selectedStory.pages.length - 1) {
         handleNextPage();
       } else {
-        setIsAutoPlay(false);
+        setIsAutoPlaying(false);
         speak("Story finished! You did great!");
       }
     }, readingTime);
@@ -311,235 +313,204 @@ export function SocialStoryViewer() {
     return () => clearTimeout(timer);
   });
 
-  if (!selectedStory) {
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <motion.div
-            className="bg-gradient-to-r from-green-500 to-blue-600 rounded-full p-3"
-            whileHover={animationsEnabled ? { scale: 1.05 } : {}}
-          >
-            <BookOpen className="w-6 h-6 text-white" />
-          </motion.div>
-          <h1 className="text-2xl font-bold text-gray-800">Social Stories</h1>
-        </div>
+  if (selectedStory) {
+    const currentPageData = selectedStory.pages[currentPage];
+    const isFirstPage = currentPage === 0;
+    const isLastPage = currentPage === selectedStory.pages.length - 1;
 
-        <div className="text-center space-y-4">
-          <div className="text-6xl">📚</div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Choose a Story to Read
-            </h2>
-            <p className="text-gray-600 text-lg">
-              Stories help us learn about different situations and what to
-              expect
-            </p>
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              onClick={resetStory}
+              className="p-1.5 sm:p-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800">
+              {selectedStory.title}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleAutoPlay}
+              className={`text-sm sm:text-base ${
+                isAutoPlaying ? "bg-blue-100" : ""
+              }`}
+            >
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+              {isAutoPlaying ? "Stop" : "Auto Play"}
+            </Button>
           </div>
         </div>
 
-        {/* Story Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {socialStories.map((story, index) => (
-            <motion.div
-              key={story.id}
-              initial={
-                animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }
-              }
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-                onClick={() => handleStorySelect(story)}
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
+          <motion.div
+            className="bg-gradient-to-r from-blue-400 to-purple-500 h-2 sm:h-3 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${getProgressPercentage()}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+
+        {/* Story Content */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={
+                  animationsEnabled ? { opacity: 0, x: 20 } : { opacity: 1 }
+                }
+                animate={{ opacity: 1, x: 0 }}
+                exit={
+                  animationsEnabled ? { opacity: 0, x: -20 } : { opacity: 1 }
+                }
+                transition={{ duration: animationsEnabled ? 0.3 : 0 }}
+                className="relative"
               >
-                <CardContent className="p-0">
-                  <div
-                    className={`bg-gradient-to-br ${story.color} p-6 text-white text-center`}
-                  >
-                    <div className="text-4xl mb-3">{story.emoji}</div>
-                    <h3 className="text-xl font-bold mb-2">{story.title}</h3>
-                    <div className="text-sm opacity-90">
-                      {story.pages.length} pages
-                    </div>
+                {/* Story Image */}
+                <div className="relative w-full h-48 sm:h-64 md:h-80 bg-gray-100">
+                  <img
+                    src={currentPageData.image}
+                    alt={`Page ${currentPage + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs sm:text-sm">
+                    {currentPage + 1} / {selectedStory.pages.length}
                   </div>
-                  <div className="p-6">
-                    <p className="text-gray-600 text-center">
-                      {story.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const currentPageData = selectedStory.pages[currentPage];
-  const isLastPage = currentPage === selectedStory.pages.length - 1;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={resetStory}
-            className="p-2 bg-transparent"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-          <h1 className="text-xl font-bold text-gray-800">
-            {selectedStory.title}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isAutoPlay ? "default" : "outline"}
-            onClick={handleAutoPlay}
-            className="flex items-center gap-2"
-          >
-            <Play className="w-4 h-4" />
-            {isAutoPlay ? "Stop Auto-Play" : "Auto-Play"}
-          </Button>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-3">
-        <motion.div
-          className={`bg-gradient-to-r ${selectedStory.color} h-3 rounded-full flex items-center justify-end pr-2`}
-          initial={{ width: 0 }}
-          animate={{ width: `${getProgressPercentage()}%` }}
-          transition={{ duration: 0.5 }}
-        >
-          {getProgressPercentage() > 15 && (
-            <span className="text-white text-xs font-bold">
-              {currentPage + 1}/{selectedStory.pages.length}
-            </span>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Story Content */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={
-                animationsEnabled ? { opacity: 0, x: 50 } : { opacity: 1 }
-              }
-              animate={{ opacity: 1, x: 0 }}
-              exit={animationsEnabled ? { opacity: 0, x: -50 } : { opacity: 1 }}
-              transition={{ duration: animationsEnabled ? 0.3 : 0 }}
-              className="space-y-6"
-            >
-              {/* Story Image */}
-              <div className="relative h-64 md:h-80 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                <img
-                  src={currentPageData.image || "/placeholder.svg"}
-                  alt={`Story illustration for page ${currentPage + 1}`}
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-medium text-gray-700">
-                  Page {currentPage + 1}
                 </div>
-              </div>
 
-              {/* Story Text */}
-              <div className="p-8 space-y-6">
-                <div className="text-center">
-                  <p className="text-xl leading-relaxed text-gray-800 max-w-3xl mx-auto">
+                {/* Story Text */}
+                <div className="p-4 sm:p-6">
+                  <p className="text-sm sm:text-base lg:text-lg text-gray-800 leading-relaxed mb-4 sm:mb-6">
                     {currentPageData.text}
                   </p>
+
+                  {/* Navigation Controls */}
+                  <div className="flex items-center justify-between">
+                    <Button
+                      onClick={handlePrevPage}
+                      disabled={isFirstPage}
+                      variant="outline"
+                      className="flex items-center gap-1 sm:gap-2"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </Button>
+
+                    <Button
+                      onClick={handlePageSpeak}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                    >
+                      <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Read Aloud</span>
+                      <span className="sm:hidden">Read</span>
+                    </Button>
+
+                    <Button
+                      onClick={handleNextPage}
+                      disabled={isLastPage}
+                      variant="outline"
+                      className="flex items-center gap-1 sm:gap-2"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+              </motion.div>
+            </AnimatePresence>
+          </CardContent>
+        </Card>
 
-                {/* Audio Controls */}
-                <div className="flex justify-center">
-                  <Button
-                    onClick={handlePageSpeak}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3"
-                  >
-                    <Volume2 className="w-5 h-5 mr-2" />
-                    Read This Page
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </CardContent>
-      </Card>
-
-      {/* Navigation Controls */}
-      <div className="flex items-center justify-between">
-        <Button
-          onClick={handlePrevPage}
-          disabled={currentPage === 0}
-          variant="outline"
-          className="flex items-center gap-2 px-6 py-3 bg-transparent"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Previous
-        </Button>
-
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
-            {currentPage + 1} of {selectedStory.pages.length}
-          </span>
-        </div>
-
-        <Button
-          onClick={handleNextPage}
-          disabled={isLastPage}
-          className={`flex items-center gap-2 px-6 py-3 ${
-            isLastPage
-              ? "bg-green-500 hover:bg-green-600"
-              : `bg-gradient-to-r ${selectedStory.color}`
-          } text-white`}
-        >
-          {isLastPage ? "Finish Story" : "Next"}
-          <ChevronRight className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Story Completion */}
-      {isLastPage && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-4 p-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl text-white"
-        >
-          <div className="text-6xl">🎉</div>
-          <h3 className="text-2xl font-bold">Great Job!</h3>
-          <p className="text-lg">
-            You finished reading "{selectedStory.title}"!
-          </p>
-          <div className="flex gap-4 justify-center">
+        {/* Completion Message */}
+        {isLastPage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center space-y-3 sm:space-y-4 p-4 sm:p-6 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl text-white"
+          >
+            <div className="text-3xl sm:text-4xl">🎉</div>
+            <h3 className="text-lg sm:text-xl font-bold">Great job!</h3>
+            <p className="text-sm sm:text-base">
+              You finished reading "{selectedStory.title}"
+            </p>
             <Button
               onClick={resetStory}
               className="bg-white text-green-600 hover:bg-gray-100"
             >
               Read Another Story
             </Button>
-            <Button
-              onClick={() => {
-                setCurrentPage(0);
-                speak(
-                  `Starting ${selectedStory.title} again from the beginning.`
-                );
-              }}
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-green-600"
-            >
-              Read Again
-            </Button>
-          </div>
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <motion.div
+          className="bg-gradient-to-r from-green-500 to-blue-600 rounded-full p-2 sm:p-3"
+          whileHover={animationsEnabled ? { scale: 1.05 } : {}}
+        >
+          <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </motion.div>
-      )}
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+          Social Stories
+        </h1>
+      </div>
+
+      <p className="text-sm sm:text-lg text-gray-600 text-center max-w-2xl mx-auto">
+        Read stories that help you understand different situations and learn new
+        skills.
+      </p>
+
+      {/* Story Selection */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {socialStories.map((story, index) => (
+          <motion.div
+            key={story.id}
+            initial={animationsEnabled ? { opacity: 0, y: 20 } : { opacity: 1 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+              onClick={() => handleStorySelect(story)}
+            >
+              <CardContent className="p-0">
+                <div
+                  className={`bg-gradient-to-br ${story.color} p-6 sm:p-8 text-white text-center`}
+                >
+                  <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">
+                    {story.emoji}
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">
+                    {story.title}
+                  </h3>
+                </div>
+                <div className="p-4 sm:p-6">
+                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
+                    {story.description}
+                  </p>
+                  <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500">
+                    <span>{story.pages.length} pages</span>
+                    <span>Tap to read</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
